@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="script.js"></script>
+    <title>Coordinate to KML Converter</title>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;600;500&display=swap');  
+      body {
+        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+        color: #6a90f3;
+        background-color: #6a90f3;
+      }
+
+      #form-container-parent {
+        width: 100%;
+        justify-content: center;
+        display: flex;
+      }
+      
+      h1 {
+        margin-bottom: 40px;
+        color: #6a90f3;
+        margin-top: 0;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+      }
+      
+      .form-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #ffffff;
+        padding: 45px;
+        border-radius: 5pt;
+        justify-content: center;
+        width: fit-content;
+
+      }
+      
+      .form-label {
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+      
+      .form-input {
+        width: 300px;
+        border-radius: 5px;
+      }
+      
+      .form-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        color: #fff;
+        background-color: #FB2576;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 60%;
+        transition: 0.3s;
+      }
+      
+      .form-button:hover {
+        background-color: #df3f7c;
+      }
+      
+      textarea {
+        resize: none;
+        padding: 10px;
+        border: 1px solid #6a90f3;
+      }
+      input[type="file"] {display: none;}
+      
+      .custom-file-upload {
+        border: 2px solid #6a90f3;
+        display: inline-block;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 4pt;
+        font-weight: 400;
+        font-family: 'Montserrat', sans-serif;
+        transition: 0.3s;
+      }
+
+      .custom-file-upload:hover {
+        color: white;
+        background-color: #6a90f3;
+      }
+
+      .export {
+        display: flex;
+        flex-direction: column;
+        background-color: #e9f0ff;
+        padding: 20px;
+        border-radius: 5pt;
+        color: black;
+        align-items: center;
+      }
+
+      .export button {
+        margin: 15px;
+      }
+
+      .export input {
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+
+      .export label {
+        margin-bottom: 15px;
+      }
+
+      p {
+        margin: 0;
+        padding: 20px;
+        color: black;
+        font-weight: 600;
+      }
+
+      .coordinate-input {
+        display: flex;
+        flex-direction: column;
+        background-color: #e9f0ff;
+        padding: 20px;
+        border-radius: 5px;
+        color: black;
+      }
+
+      .coordinate-input label {
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="form-container-parent">
+        
+        <div class="form-container">
+            <h1>Coordinate to KML Converter</h1>
+            <div class="coordinate-input">
+                <label class="form-label" for="coordinateInput">Enter coordinates:</label>
+                <textarea id="coordinateInput" class="form-input" rows="5" placeholder="Example: longitude1 latitude1; longitude2 latitude2; ..."></textarea>
+            </div>
+        <p>or</p>
+        <label class="custom-file-upload">
+            <input type="file" id="csvFileInput" accept=".csv">
+            Upload CSV file
+        </label>
+        <br><br>
+        <div class="export">
+            <label class="form-label" for="filenameInput">Select filename:</label>
+            <input type="text" id="filenameInput" class="form-input" placeholder="filename.kml">
+          
+            <button type="button" class="form-button" onclick="generateKML()">Download KML</button>
+        </div>
+        </div>
+    </div>
+
+
+    
+    <script>
+      function generateKML() {
+        // Get the coordinate input value
+        const coordinateInput = document.getElementById('coordinateInput').value.trim();
+        
+        // Get the filename input value
+        const filenameInput = document.getElementById('filenameInput').value.trim();
+        
+        // Check if both inputs are provided
+        if (!coordinateInput || !filenameInput) {
+          alert('Please provide both coordinates and a filename.');
+          return;
+        }
+        
+        // Split the coordinate input by semicolon or line break to get coordinate pairs
+        const coordinatePairs = coordinateInput.split(/;|\n/);
+        
+        // Create a KML string
+        let kml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        kml += '<kml xmlns="http://www.opengis.net/kml/2.2">\n';
+        kml += '  <Document>\n';
+        
+        // Loop through each coordinate pair
+        coordinatePairs.forEach((pair, index) => {
+        // Split the pair by comma or space to get longitude and latitude
+        const [longitude, latitude] = pair.split(/,|\s/);
+
+        // Check if the coordinates are valid numbers
+        if (isNaN(latitude) || isNaN(longitude)) {
+            console.error(`Invalid coordinates: ${pair}`);
+            return;
+        }
+
+        // Add a Placemark for the coordinate pair
+        kml += '    <Placemark>\n';
+        kml += `      <name>Place ${index + 1}</name>\n`;
+        kml += '      <Point>\n';
+        kml += `        <coordinates>${longitude},${latitude},0</coordinates>\n`;
+        kml += '      </Point>\n';
+        kml += '    </Placemark>\n';
+        });
+        kml += '</Document>\n';
+        kml += '</kml>';
+
+    // Create a Blob with the KML data
+    const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+    
+    // Create a link to download the KML file
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${filenameInput}.kml`;
+    
+    // Append the link to the document body
+    document.body.appendChild(a);
+    
+    // Trigger the click event on the link to start the download
+    a.click();
+    
+    // Clean up by removing the link
+    document.body.removeChild(a);
+  }
+    </script>
+  </body>
+</html>
